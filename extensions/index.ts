@@ -1,46 +1,38 @@
-import type { ExtensionAPI, ExtensionCommandContext, Theme, ToolInfo } from "@earendil-works/pi-coding-agent";
+import {
+  getAgentDir,
+  type ExtensionAPI,
+  type ExtensionCommandContext,
+  type Theme,
+  type ToolInfo,
+} from "@earendil-works/pi-coding-agent";
 import { matchesKey, truncateToWidth, type Component, type TUI } from "@earendil-works/pi-tui";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const EXTENSION_DIR = typeof import.meta.dirname === "string"
-  ? import.meta.dirname
-  : fileURLToPath(new URL(".", import.meta.url));
-const CONFIG_FILE = join(EXTENSION_DIR, "config.json");
+export interface ToolsManagerOptions {
+  configPath?: string;
+}
 
 interface ToolConfig {
   disabled: string[];
 }
 
-function loadConfig(): ToolConfig {
+function resolveConfigFile(options?: ToolsManagerOptions): string {
+  if (options?.configPath) {
+    return options.configPath;
+  }
+  if (process.env.PI_TOOLS_MANAGER_CONFIG) {
+    return process.env.PI_TOOLS_MANAGER_CONFIG;
+  }
+  return join(getAgentDir(), "tools-manager.json");
+}
+
+function loadConfig(configFile: string): ToolConfig {
   try {
-    if (!existsSync(CONFIG_FILE)) {
-      // Check if installed didin-pi-extensions or pi-disable-tools config exists to migrate/seed
-      const legacyFiles = [
-        join(homedir(), ".pi/agent/extensions/didin-pi-extensions/config.json"),
-        join(homedir(), ".pi/agent/extensions/pi-disable-tools/config.json"),
-      ];
-      for (const legacyFile of legacyFiles) {
-        if (existsSync(legacyFile)) {
-          try {
-            const raw = JSON.parse(readFileSync(legacyFile, "utf-8")) as unknown;
-            const cfg = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
-            const disabled = Array.isArray(cfg.disabled)
-              ? cfg.disabled.filter((n): n is string => typeof n === "string" && n.length > 0)
-              : [];
-            const initial = { disabled };
-            saveConfig(initial);
-            return initial;
-          } catch {
-            // ignore error during fallback
-          }
-        }
-      }
+    if (!existsSync(configFile)) {
       return { disabled: [] };
     }
-    const raw = JSON.parse(readFileSync(CONFIG_FILE, "utf-8")) as unknown;
+    const raw = JSON.parse(readFileSync(configFile, "utf-8")) as unknown;
     const cfg = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
     const disabled = Array.isArray(cfg.disabled)
       ? cfg.disabled.filter((n): n is string => typeof n === "string" && n.length > 0)
@@ -51,9 +43,13 @@ function loadConfig(): ToolConfig {
   }
 }
 
-function saveConfig(cfg: ToolConfig): void {
-  mkdirSync(EXTENSION_DIR, { recursive: true });
-  writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2) + "\n", "utf-8");
+function saveConfig(configFile: string, cfg: ToolConfig): void {
+  try {
+    mkdirSync(dirname(configFile), { recursive: true });
+    writeFileSync(configFile, JSON.stringify(cfg, null, 2) + "\n", "utf-8");
+  } catch {
+    // Gracefully ignore write failures (e.g. read-only filesystem)
+  }
 }
 
 /**
@@ -766,11 +762,12 @@ class ToolInfoComponent implements Component {
  * keyboard-navigable table with darker/muted colors, showing details on Enter.
  * Operates purely in the UI layer without entering the conversation context.
  */
-export default function toolsManagerExtension(pi: ExtensionAPI) {
-  const disabled = new Set<string>(loadConfig().disabled);
+export default function toolsManagerExtension(pi: ExtensionAPI, options?: ToolsManagerOptions) {
+  const configFile = resolveConfigFile(options);
+  const disabled = new Set<string>(loadConfig(configFile).disabled);
 
   function persist(): void {
-    saveConfig({ disabled: Array.from(disabled).sort() });
+    saveConfig(configFile, { disabled: Array.from(disabled).sort() });
   }
 
   function applyTools(): void {
