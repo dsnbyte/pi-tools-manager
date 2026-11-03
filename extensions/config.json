@@ -1,0 +1,8 @@
+{
+  "disabled": [
+    "agent_browser_web_search",
+    "antigravity_websearch",
+    "google_search",
+    "tool_search"
+  ]
+}
