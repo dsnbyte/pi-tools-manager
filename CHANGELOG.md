@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0]
+## [0.1.0] - 2026-11-04
 
 ### Added
 - Interactive TUI table to inspect all installed tools, sources (built-in, SDK, npm, local extension), and descriptions.
