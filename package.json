@@ -1,9 +1,21 @@
 {
-  "name": "pi-tools-manager",
+  "name": "@dsnbyte/pi-tools-manager",
   "version": "0.1.0",
   "description": "Pi extension to inspect, search, and toggle installed tools via an interactive TUI",
   "type": "module",
+  "author": "dsnbyte",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsnbyte/pi-tools-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dsnbyte/pi-tools-manager/issues"
+  },
+  "homepage": "https://github.com/dsnbyte/pi-tools-manager#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "pi-package",
     "pi-extension",
@@ -13,7 +25,9 @@
   ],
   "files": [
     "extensions",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "pi": {
     "extensions": [
@@ -39,5 +53,11 @@
     "@earendil-works/pi-tui": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^1.5.0",
+    "@earendil-works/pi-tui": "^1.5.0",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
   }
 }

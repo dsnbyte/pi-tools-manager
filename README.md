@@ -21,7 +21,7 @@ pi install ./pi-tools-manager
 Or from npm/git when published:
 
 ```bash
-pi install npm:pi-tools-manager
+pi install npm:@dsnbyte/pi-tools-manager
 ```
 
 ## Usage
